@@ -31,7 +31,7 @@ app.get('/api/exercise/log', (req, res) => {
 
 app.post('/api/exercise/new-user', (req, res) => {
   console.log(req.body.username);
-  res.json({ msg: 'success', username: req.body.username });
+  res.json({ username: req.body.username, _id: '123456abcde' });
 });
 
 app.post('/api/exercise/add', (req, res) => {
@@ -42,6 +42,10 @@ app.post('/api/exercise/add', (req, res) => {
     duration: req.body.duration,
     date: req.body.date
   });
+});
+
+app.get('*', (req, res) => {
+  res.redirect('/');
 });
 
 app.listen(port, () => {
