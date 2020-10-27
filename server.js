@@ -18,6 +18,16 @@ app.post('/api/exercise/new-user', (req, res) => {
   res.json({ msg: 'success', username: req.body.username });
 });
 
+app.post('/api/exercise/add', (req, res) => {
+  res.json({
+    msg: 'success', 
+    userId: req.body.userId,
+    description: req.body.description,
+    duration: req.body.duration,
+    date: req.body.date
+  });
+});
+
 app.listen(port, () => {
   console.log(`Your app is listening on port ${port}`);
 });
