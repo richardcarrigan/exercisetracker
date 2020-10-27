@@ -2,6 +2,7 @@ const bodyParser = require('body-parser');
 const dotenv = require('dotenv').config();
 const express = require('express');
 const port = process.env.PORT || 3000;
+const url = require('url');
 
 const app = express();
 
@@ -14,9 +15,18 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/exercise/log', (req, res) => {
-  res.json({ 
-    msg: 'success'
-  });
+  const queryObject = url.parse(req.url, true).query;
+  if(queryObject.userId) {
+    res.json({ 
+      msg: 'success',
+      userId: queryObject.userId,
+      from: queryObject.from,
+      to: queryObject.to,
+      limit: queryObject.limit
+    });
+  } else {
+    res.json({ msg: 'failure', err: 'must include userId' });
+  }
 });
 
 app.post('/api/exercise/new-user', (req, res) => {
