@@ -13,6 +13,11 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html');
 });
 
+app.post('/api/exercise/new-user', (req, res) => {
+  console.log(req.body.username);
+  res.json({ msg: 'success', username: req.body.username });
+});
+
 app.listen(port, () => {
   console.log(`Your app is listening on port ${port}`);
 });
