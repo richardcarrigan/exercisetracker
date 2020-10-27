@@ -1,8 +1,20 @@
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv').config();
 const express = require('express');
+const MongoClient = require('mongodb').MongoClient;
 const port = process.env.PORT || 3000;
 const url = require('url');
+
+const client = new MongoClient(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+let collection = '';
+client.connect(err => {
+  if(err) {
+    console.error(err);
+  } else {
+    collection = client.db('exercise-tracker').collection('users');
+    console.log('Connected to db...');
+  }
+});
 
 const app = express();
 
