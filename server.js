@@ -14,6 +14,18 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html');
 });
 
+app.get('/api/exercise/users', (req, res) => {
+  res.json({
+    users: [
+      { username: 'user1', _id: '1' },
+      { username: 'user2', _id: '2' },
+      { username: 'user3', _id: '3' },
+      { username: 'user4', _id: '4' },
+      { username: 'user5', _id: '5' }
+    ]
+  });
+});
+
 app.get('/api/exercise/log', (req, res) => {
   const queryObject = url.parse(req.url, true).query;
   if(queryObject.userId) {
