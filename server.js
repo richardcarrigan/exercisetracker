@@ -2,6 +2,7 @@ const bodyParser = require('body-parser');
 const dotenv = require('dotenv').config();
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require('mongodb').ObjectID;
 const port = process.env.PORT || 3000;
 const url = require('url');
 
@@ -30,7 +31,7 @@ app.get('/api/exercise/users', async (req, res) => {
   const users = [];
   const cursor = await collection.find();
   cursor.forEach(user => {
-    users.push(user)
+    users.push({ username: user.username, _id: user._id });
   }).then(() => res.json(users));
 });
 
@@ -50,28 +51,36 @@ app.get('/api/exercise/log', (req, res) => {
 });
 
 app.post('/api/exercise/new-user', (req, res) => {
-  collection.findOne({ username: req.body.username }).then(user => {
+  const query = { username: req.body.username };
+  collection.findOne(query).then(user => {
     if(user !== null) {
-      res.json(user);
+      res.json({ username: user.username, _id: user._id });
     } else {
-      collection.insertOne({ username: req.body.username }).then(result => {
-        collection.findOne({ username: req.body.username }).then(user => {
-          res.json(user);
+      collection.insertOne({ username: req.body.username, exercises: [] }).then(result => {
+        collection.findOne(query).then(user => {
+          res.json({ username: user.username, _id: user._id });
         });
       });
     }
   });
-  // console.log(req.body.username);
-  // res.json({ username: req.body.username, _id: '123456abcde' });
 });
 
 app.post('/api/exercise/add', (req, res) => {
-  res.json({
-    msg: 'success', 
-    userId: req.body.userId,
-    description: req.body.description,
-    duration: req.body.duration,
-    date: req.body.date
+  const query = { _id: new ObjectId(req.body.userId) };
+  collection.findOne(query).then(user => {
+    if(user !== null) {
+      const exercise = {
+        description: req.body.description,
+        duration: req.body.duration,
+        date: req.body.date
+      };
+      const exercises = [...user.exercises, exercise];
+      collection.findOneAndUpdate(query, { $set: { exercises: exercises } }).then(result => {
+        res.json(result.value);
+      })
+    } else {
+      res.json({ msg: `You must add user ${req.body.userId} before adding exercises!`});
+    }
   });
 });
 
