@@ -29,10 +29,15 @@ app.get('/', (req, res) => {
 
 app.get('/api/exercise/users', async (req, res) => {
   const users = [];
-  const cursor = await collection.find();
-  cursor.forEach(user => {
-    users.push({ username: user.username, _id: user._id });
-  }).then(() => res.json(users));
+  try {
+    const cursor = await collection.find();
+    cursor.forEach(user => {
+      users.push({ username: user.username, _id: user._id });
+    }).then(() => res.json(users));
+  }
+  catch {
+    res.json({ msg: 'Error retrieving user list' });
+  }
 });
 
 app.get('/api/exercise/log', (req, res) => {
@@ -59,10 +64,10 @@ app.post('/api/exercise/new-user', (req, res) => {
       collection.insertOne({ username: req.body.username, exercises: [] }).then(result => {
         collection.findOne(query).then(user => {
           res.json({ username: user.username, _id: user._id });
-        });
-      });
+        }).catch( err => res.json({ msg: err }));
+      }).catch( err => res.json({ msg: err }));
     }
-  });
+  }).catch( err => res.json({ msg: err }));
 });
 
 app.post('/api/exercise/add', (req, res) => {
@@ -77,11 +82,11 @@ app.post('/api/exercise/add', (req, res) => {
       const exercises = [...user.exercises, exercise];
       collection.findOneAndUpdate(query, { $set: { exercises: exercises } }).then(result => {
         res.json(result.value);
-      })
+      }).catch( err => res.json({ msg: err }));
     } else {
       res.json({ msg: `You must add user ${req.body.userId} before adding exercises!`});
     }
-  });
+  }).catch( err => res.json({ msg: err }));
 });
 
 app.get('*', (req, res) => {
