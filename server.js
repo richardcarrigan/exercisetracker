@@ -26,16 +26,12 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html');
 });
 
-app.get('/api/exercise/users', (req, res) => {
-  res.json({
-    users: [
-      { username: 'user1', _id: '1' },
-      { username: 'user2', _id: '2' },
-      { username: 'user3', _id: '3' },
-      { username: 'user4', _id: '4' },
-      { username: 'user5', _id: '5' }
-    ]
-  });
+app.get('/api/exercise/users', async (req, res) => {
+  const users = [];
+  const cursor = await collection.find();
+  cursor.forEach(user => {
+    users.push(user)
+  }).then(() => res.json(users));
 });
 
 app.get('/api/exercise/log', (req, res) => {
@@ -54,8 +50,19 @@ app.get('/api/exercise/log', (req, res) => {
 });
 
 app.post('/api/exercise/new-user', (req, res) => {
-  console.log(req.body.username);
-  res.json({ username: req.body.username, _id: '123456abcde' });
+  collection.findOne({ username: req.body.username }).then(user => {
+    if(user !== null) {
+      res.json(user);
+    } else {
+      collection.insertOne({ username: req.body.username }).then(result => {
+        collection.findOne({ username: req.body.username }).then(user => {
+          res.json(user);
+        });
+      });
+    }
+  });
+  // console.log(req.body.username);
+  // res.json({ username: req.body.username, _id: '123456abcde' });
 });
 
 app.post('/api/exercise/add', (req, res) => {
