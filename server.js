@@ -71,18 +71,16 @@ app.post('/api/exercise/new-user', (req, res) => {
 });
 
 app.post('/api/exercise/add', (req, res) => {
-  const query = { _id: new ObjectId(req.body.userId) };
-  collection.findOne(query).then(user => {
+  const filter = { _id: new ObjectId(req.body.userId) };
+  const exercise = {
+    description: req.body.description,
+    duration: req.body.duration,
+    date: req.body.date
+  };
+
+  collection.findOneAndUpdate(filter, { $push: { exercises: exercise } }, { returnOriginal: false }).then(user => {
     if(user !== null) {
-      const exercise = {
-        description: req.body.description,
-        duration: req.body.duration,
-        date: req.body.date
-      };
-      const exercises = [...user.exercises, exercise];
-      collection.findOneAndUpdate(query, { $set: { exercises: exercises } }).then(result => {
-        res.json(result.value);
-      }).catch( err => res.json({ msg: err }));
+        res.json(user.value);
     } else {
       res.json({ msg: `You must add user ${req.body.userId} before adding exercises!`});
     }
