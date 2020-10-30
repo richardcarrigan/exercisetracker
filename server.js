@@ -45,8 +45,27 @@ app.get('/api/exercise/log', (req, res) => {
   if(queryObject.userId) {
     collection.findOne({ _id: new ObjectId(queryObject.userId) }).then(result => {
       if(result !== null) {
-        const count = result.exercises.length;
-        res.json({...result, count: count });
+        const exercises = result.exercises;
+        let exerciseResult = [];
+
+        if(queryObject.from && queryObject.to) {
+          const from = new Date(queryObject.from);
+          const to = new Date(queryObject.to);
+          exercises.forEach(exercise => {
+            if(exercise.date >= from && exercise.date <= to) {
+              exerciseResult.push(exercise);
+            }
+          });
+        } else {
+          exerciseResult = [...exercises];
+        }
+
+        if(queryObject.limit && queryObject.limit < exerciseResult.length) {
+          exerciseResult = exerciseResult.slice(0, queryObject.limit);
+        }
+
+        const count = exerciseResult.length;
+        res.json({ _id: result._id, exercises: exerciseResult, count: count });
       } else {
         res.json({ msg: `user ${queryObject.userId} not found` });
       }
