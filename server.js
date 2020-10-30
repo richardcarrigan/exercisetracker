@@ -1,4 +1,5 @@
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const dotenv = require('dotenv').config();
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
@@ -21,6 +22,8 @@ const app = express();
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+
+app.use(cors());
 
 app.use(express.static('public'));
 app.get('/', (req, res) => {
@@ -45,7 +48,7 @@ app.get('/api/exercise/log', (req, res) => {
   if(queryObject.userId) {
     collection.findOne({ _id: new ObjectId(queryObject.userId) }).then(result => {
       if(result !== null) {
-        const exercises = result.exercises;
+        const exercises = result.log;
         let exerciseResult = [];
 
         if(queryObject.from && queryObject.to) {
@@ -53,10 +56,14 @@ app.get('/api/exercise/log', (req, res) => {
           const to = new Date(queryObject.to);
           exercises.forEach(exercise => {
             if(exercise.date >= from && exercise.date <= to) {
+              exercise.date = exercise.date.toDateString();
               exerciseResult.push(exercise);
             }
           });
         } else {
+          exercises.forEach(exercise => {
+            exercise.date = exercise.date.toDateString();
+          })
           exerciseResult = [...exercises];
         }
 
@@ -65,7 +72,7 @@ app.get('/api/exercise/log', (req, res) => {
         }
 
         const count = exerciseResult.length;
-        res.json({ _id: result._id, exercises: exerciseResult, count: count });
+        res.json({ _id: result._id, username: result.username, log: exerciseResult, count: count });
       } else {
         res.json({ msg: `user ${queryObject.userId} not found` });
       }
@@ -83,7 +90,7 @@ app.post('/api/exercise/new-user', (req, res) => {
     } else {
       collection.findOneAndUpdate(
         query, 
-        { $set: { username: req.body.username, exercises: [] } },
+        { $set: { username: req.body.username, log: [] } },
         { returnOriginal: false, upsert: true}
       ).then(user => {
         res.json({ username: user.value.username, _id: user.value._id });
@@ -96,13 +103,20 @@ app.post('/api/exercise/add', (req, res) => {
   const filter = { _id: new ObjectId(req.body.userId) };
   const exercise = {
     description: req.body.description,
-    duration: req.body.duration,
+    duration: +req.body.duration,
     date: req.body.date ? new Date(req.body.date) : new Date()
   };
 
-  collection.findOneAndUpdate(filter, { $push: { exercises: exercise } }, { returnOriginal: false }).then(user => {
+  collection.findOneAndUpdate(filter, { $push: { log: exercise } }, { returnOriginal: false }).then(user => {
     if(user !== null) {
-        res.json(user.value);
+      const newExercise = user.value.log[user.value.log.length - 1];
+        res.json({
+          username: user.value.username,
+          description: newExercise.description,
+          duration: newExercise.duration,
+          _id: user.value._id,
+          date: newExercise.date.toDateString()
+        });
     } else {
       res.json({ msg: `You must add user ${req.body.userId} before adding exercises!`});
     }
